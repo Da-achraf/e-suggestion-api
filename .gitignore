@@ -18,6 +18,7 @@ env3.*
 env
 .venv
 .env
+.env.dev
 docs_build
 site_build
 venv

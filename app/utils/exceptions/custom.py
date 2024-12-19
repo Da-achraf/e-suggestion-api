@@ -33,3 +33,11 @@ class CustomHTTPException:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=detail
         )
+        
+    @staticmethod
+    def unique_constraint_violation(model_name: str):
+        detail = f"Unique contraint violated for model '{model_name}'"
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail
+        )

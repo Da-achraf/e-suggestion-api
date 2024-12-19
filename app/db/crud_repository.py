@@ -9,6 +9,9 @@ ModelType = TypeVar("ModelType", bound=SQLModel)
 
 
 class CRUDBaseRepository(Generic[ModelType]):
+    """
+    Generic class for CRUD repository
+    """
     def __init__(self, model: ModelType) -> None:
         self.model = model
 
