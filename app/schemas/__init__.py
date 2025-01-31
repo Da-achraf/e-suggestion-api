@@ -1,5 +1,2 @@
-from schemas.user import User, UserBase
-from schemas.role import Role
-from schemas.bu import BU, BUCreate
-from schemas.response import Response
-from schemas.request import PatchDeleteReq
+from app.schemas.response import Response, ResponseWithPagination
+from app.schemas.request import PatchDeleteReq

@@ -1,15 +1,14 @@
 from fastapi import HTTPException, status, Depends
 from typing import Annotated
 
-from db.repositories import UserRepositoryDep
-from db.dependencies import SessionDep
-from core.security import get_password_hash
-from schemas.auth import UserRegisterRequest
-from schemas.user import UserInDb
+from app.db.repositories import UserRepositoryDep
+from app.db.dependencies import SessionDep
+from app.core.security import get_password_hash
+from app.db.models import UserCreate, UserInDb
 
 
 def get_user_to_save(
-    user: UserRegisterRequest,
+    user: UserCreate,
     user_repository: UserRepositoryDep,
     db: SessionDep
 ):
@@ -29,4 +28,4 @@ def get_user_to_save(
     user_data['hashed_password'] = get_password_hash(user.password)
     return UserInDb(**user_data)
 
-UserToSaveDep = Annotated[UserInDb, Depends(get_user_to_save)]
+UserToSaveDep = Annotated[UserCreate, Depends(get_user_to_save)]

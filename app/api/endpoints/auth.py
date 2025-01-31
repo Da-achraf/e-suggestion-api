@@ -1,48 +1,70 @@
-from fastapi import APIRouter, status, HTTPException
+from typing import Optional
+from fastapi import APIRouter, status
 from sqlalchemy.exc import SQLAlchemyError
 
-from core.security import generate_tokens
-from db.dependencies import SessionDep
+from app.core.security import generate_tokens
+from app.db.dependencies import SessionDep
 
 
-from dependencies.user import UserToSaveDep
-from db.repositories import UserRepositoryDep
-from core.config import SettingsDep
-from core.dpendencies import AuthenticatedUserDep
-from schemas import User, Response
-from schemas.auth import Token
-from utils.exceptions.db import transaction_failed
+from app.dependencies.user import UserToSaveDep
+from app.db.repositories import UserRepositoryDep, RoleRepositoryDep
+from app.core.config import SettingsDep
+from app.core.dpendencies import AuthenticatedUserDep
+from app.schemas import Response
+from app.db.models import User, UserWithToken, Role, RoleEnum
+from app.schemas.auth import Token
+from app.utils.exceptions.db import transaction_failed
 
-from utils.exceptions.auth import account_not_approved, incorrect_credentials
+from app.utils.exceptions.auth import account_not_approved, incorrect_credentials
 
 
 router = APIRouter()
 
 
 # Register A User
-@router.post('/register', status_code=status.HTTP_201_CREATED, response_model=Response[User])
+@router.post('/register', status_code=status.HTTP_201_CREATED, response_model=Response[UserWithToken])
 async def register(
     user_to_save: UserToSaveDep,
     user_repository: UserRepositoryDep,
+    role_repository: RoleRepositoryDep,
     db: SessionDep,
+    settings: SettingsDep
 ):
+
     if not user_to_save:
         raise exceptions.credentials_already_taken
     try:
         saved_user = user_repository.insert_line(data=user_to_save, db=db)
+        
+        parsed_user = User.model_validate(saved_user)
+        
+        role: Optional[Role] = role_repository.find_by_id(db=db, model_id=user_to_save.role_id)
+        
+        # Activate the account
+        if role and Role.model_validate(role).name == RoleEnum.SUBMITTER.value:
+            saved_user.account_status = True
+        
+        if parsed_user and role and role.name not in [role['name'] for role in parsed_user.roles]:
+            saved_user.roles.append(role)
+        
+        db.commit()
+        
+        # Generate tokens
+        access_token, _ = generate_tokens(user=parsed_user, settings=settings.JWT)
+        user_with_token = UserWithToken(**parsed_user.model_dump(), token=access_token)
         
     except SQLAlchemyError:
         db.rollback()
         raise transaction_failed
     else:
         db.commit()
-        return Response[User](
-            data=saved_user
+        return Response[UserWithToken](
+            data=user_with_token
         )
 
 
 # Login
-@router.post(path="/login", response_model=Response[Token])
+@router.post(path="/login", response_model=Response[UserWithToken])
 async def login_for_tokens(
     settings: SettingsDep,
     authenticated_user: AuthenticatedUserDep,
@@ -53,14 +75,12 @@ async def login_for_tokens(
     if not authenticated_user.account_status:
         raise account_not_approved
 
-    access_token, refresh_token = generate_tokens(user=authenticated_user, settings=settings.JWT)
+    access_token, _ = generate_tokens(user=authenticated_user, settings=settings.JWT)
+    
+    user_with_token = UserWithToken(**authenticated_user.model_dump(), token=access_token)
 
-    return Response[Token](
-        data=Token(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            token_type="bearer"
-        )
+    return Response[UserWithToken](
+        data=user_with_token
     )
 
 

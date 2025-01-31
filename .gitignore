@@ -26,6 +26,7 @@ docs.zip
 archive.zip
 
 uploads
+static
 
 *.py.un~
 **/*.py.un~

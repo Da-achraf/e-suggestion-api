@@ -6,21 +6,22 @@ if TYPE_CHECKING:
     from app.db.models import UserModel
 
 
-class BUBase(SQLModel):
+class PlantBase(SQLModel):
     name: str = Field(unique=True, max_length=255)
 
-class BUCreate(BUBase):
+class PlantCreate(PlantBase):
     pass
 
 
-class BUModel(BUBase, table=True):
-    __tablename__ = "bus"
+class PlantModel(PlantBase, table=True):
+    __tablename__ = "plants"
     id: Optional[int] = Field(default=None, primary_key=True)
     
-    user: Optional['UserModel'] = Relationship(back_populates='bu')
+    user: Optional['UserModel'] = Relationship(back_populates='plant')
     
-class BU(BUBase):
+    
+class Plant(PlantBase):
     id: int
     
     class Config:
-        from_attributes = True
+        from_attriPlanttes = True

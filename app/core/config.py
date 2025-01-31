@@ -27,6 +27,7 @@ class DatabaseSettings(BaseSettings):
 class Settings(BaseSettings):
     PROJECT_TITLE: str
     MODE: str
+    APP_PROTOCOL: str
     APP_HOST: str
     APP_PORT: int
     APP_WORKERS: int
@@ -49,6 +50,7 @@ def get_settings() -> Settings:
         MODE=os.getenv('MODE'),
         APP_HOST=os.getenv('APP_HOST'),
         APP_PORT=int(os.getenv('APP_PORT')),
+        APP_PROTOCOL=os.getenv('APP_PROTOCOL'),
         APP_WORKERS=int(os.getenv('APP_WORKERS')),
         DB=db_settings,
         JWT=jwt_settings

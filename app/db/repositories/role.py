@@ -1,12 +1,12 @@
 from typing import Annotated
 from fastapi import Depends
 
-from db.crud_repository import CRUDBaseRepository, get_repository
-from db.models import Role
+from app.db.crud_repository import CRUDBaseRepository, get_repository
+from app.db.models import RoleModel, Role
 
 class RoleRepository(CRUDBaseRepository):
     def __init__(self) -> None:
-        super().__init__(Role)
+        super().__init__(RoleModel, Role)
         
 
 RoleRepositoryDep = Annotated[RoleRepository, Depends(get_repository(RoleRepository))]

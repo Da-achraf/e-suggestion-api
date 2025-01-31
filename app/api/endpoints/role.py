@@ -1,8 +1,7 @@
-from db.models import Role as RoleModel
-from schemas import Role
-from schemas.role import RoleCreate
-from api.base_router import BaseRouter
-from db.repositories import RoleRepository
+from app.db.models import RoleModel, Role
+from app.db.models.role import RoleCreate
+from app.api.base_router import BaseRouter
+from app.db.repositories import RoleRepository
 
 
 class RoleRouter(BaseRouter[RoleModel, Role]):

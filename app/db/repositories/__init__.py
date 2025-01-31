@@ -1,3 +1,9 @@
 from .user import UserRepository, UserRepositoryDep
 from .bu import BURepository, BURepositoryDep
 from .role import RoleRepository, RoleRepositoryDep
+from .plant import PlantRepository, PlantRepositoryDep
+from .idea import IdeaRepository, IdeaRepositoryDep
+from .attachment import AttachmentRepository, AttachmentRepositoryDep
+from .comment import CommentRepository, CommentRepositoryDep
+from .rating_matrix import RatingMatrixRepository, RatingMatrixRepositoryDep
+from .assignment import AssignmentRepository, AssignmentRepositoryDep

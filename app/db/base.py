@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, create_engine, MetaData, Session
-from core.config import get_settings
+from app.core.config import get_settings
 
 # Get the database URL from settings
 DATABASE_URL = get_settings().DB.URL

@@ -1,13 +1,13 @@
-from typing import Generic, TypeVar, Type, Dict, Callable
+from typing import Generic, TypeVar, Type, Dict, Callable, List
 
 from fastapi import APIRouter
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-from utils.exceptions import CustomHTTPException, something_went_wrong
-from utils.exceptions.db import transaction_failed
-from db.crud_repository import CRUDBaseRepository
-from db.dependencies import SessionDep
-from schemas import Response, PatchDeleteReq
+from app.utils.exceptions import CustomHTTPException, something_went_wrong
+from app.utils.exceptions.db import transaction_failed
+from app.db.crud_repository import CRUDBaseRepository
+from app.db.dependencies import SessionDep
+from app.schemas import Response, PatchDeleteReq
 
 
 ModelType = TypeVar("ModelType")
@@ -167,7 +167,7 @@ class BaseRouter(Generic[ModelType, ResponseType]):
         if not items:
             raise CustomHTTPException.no_items_found(self.model_name)
 
-        return Response[list[self.response_type]](
+        return Response[List[self.response_type]](
             data=items
         )
 

@@ -1,13 +1,13 @@
 from typing import Annotated, Optional
 from fastapi import Depends
-from sqlmodel import Session, select, or_
+from sqlmodel import Session, select
 
-from db.crud_repository import CRUDBaseRepository, get_repository
-from db.models import User
+from app.db.crud_repository import CRUDBaseRepository, get_repository
+from app.db.models import UserModel, User
 
 class UserRepository(CRUDBaseRepository):
     def __init__(self) -> None:
-        super().__init__(User)
+        super().__init__(UserModel, User)
         
     def find_by_username_or_email(
             self,

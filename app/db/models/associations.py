@@ -3,6 +3,7 @@ from typing import Optional
 
 class UserRoleLink(SQLModel, table=True):
     __tablename__ = "users_roles"
+    
     role_id: Optional[int] = Field(
         default=None, 
         foreign_key="roles.id", 

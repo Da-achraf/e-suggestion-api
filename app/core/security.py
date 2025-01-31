@@ -7,11 +7,11 @@ from passlib.context import CryptContext
 
 from typing import Annotated
 
-from schemas import User
-from schemas.auth import TokenCreationSettings, TokenVerificationSettings
-from core.config import JWTSettings, SettingsDep
-from db.dependencies import SessionDep
-from db.repositories import UserRepositoryDep
+from app.db.models import User
+from app.schemas.auth import TokenCreationSettings, TokenVerificationSettings
+from app.core.config import JWTSettings, SettingsDep
+from app.db.dependencies import SessionDep
+from app.db.repositories import UserRepositoryDep
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -52,7 +52,7 @@ async def verify_token(sett: TokenVerificationSettings):
             algorithms=[sett.algorithm]
         )
 
-        user_id = payload.get("user_id")
+        user_id = payload.get("sub")
         
         return user_id
     except InvalidTokenError:
@@ -65,9 +65,9 @@ def generate_tokens(user: User, settings: JWTSettings):
     refresh_token_expires = timedelta(minutes=int(settings.REFRESH_TOKEN_EXPIRE_MINUTES))
     
     to_encode = {
-        "sub": user.email,
+        "sub": user.id,
         'roles': [role.name for role in user.roles],
-        'user_id': user.id
+        'email': user.email
     }
     
     access_token_sett = TokenCreationSettings(
@@ -120,9 +120,9 @@ async def get_current_user(
     return user
 
 def get_authenticated_user(
-        login_req: Annotated[OAuth2PasswordRequestForm, Depends()],
-        user_repository: UserRepositoryDep,
-        db: SessionDep
+    login_req: Annotated[OAuth2PasswordRequestForm, Depends()],
+    user_repository: UserRepositoryDep,
+    db: SessionDep
 ):
     found_user = user_repository.find_by_username_or_email(
         email=login_req.username,
