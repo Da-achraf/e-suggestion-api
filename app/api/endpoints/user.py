@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict
 
 from app.schemas.response import Response
 from app.db.models import UserModel, UserBase, User, UserWithToken

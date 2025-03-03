@@ -9,12 +9,15 @@ from .associations import UserRoleLink
 from .bu import BUModel, BU
 from .role import Role
 from .plant import PlantModel, Plant
+from .associations import UserAssignmentLink
 
 if TYPE_CHECKING:
     from .role import RoleModel
     from .attachment import AttachmentModel
     from .comment import CommentModel
     from .assignment_comment import AssignmentCommentModel
+    from .assignment import AssignmentModel
+    from .teoa_comment import TeoaCommentModel
 
 
 class UserBase(SQLModel):
@@ -46,7 +49,15 @@ class UserModel(UserBase, UserLocationMixin, table=True):
     uploads: List['AttachmentModel'] = Relationship(back_populates='uploader')
     
     comments: List['CommentModel'] = Relationship(back_populates='commenter')
+    
+    assignments: List['AssignmentModel'] = Relationship(
+        back_populates="assignees", 
+        link_model=UserAssignmentLink
+    )
+    
     assignments_comments: List['AssignmentCommentModel'] = Relationship(back_populates='commenter')
+    
+    teoa_comments: List['TeoaCommentModel'] = Relationship(back_populates='commenter')
 
     roles: List["RoleModel"] = Relationship(
         back_populates="users",

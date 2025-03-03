@@ -1,5 +1,9 @@
 from fastapi import APIRouter
-from .endpoints import auth, user, bu, role, plant, idea, image, attachment, comment, rating_matrix, assignment
+from .endpoints import (
+    auth, user, bu, role, plant, idea, image,
+    attachment, comment, rating_matrix, assignment,
+    assignment_comment, teoa_review, teoa_comment
+)
 
 api_router = APIRouter()
 
@@ -14,3 +18,6 @@ api_router.include_router(attachment.router, prefix="/attachments", tags=["Attac
 api_router.include_router(comment.router, prefix="/comments", tags=["Comments"])
 api_router.include_router(rating_matrix.router, prefix="/rating-matrices", tags=["Rating Matrices"])
 api_router.include_router(assignment.router, prefix="/assignments", tags=["Ideas Assignments"])
+api_router.include_router(assignment_comment.router, prefix="/assignments-comments", tags=["Assignments Comments"])
+api_router.include_router(teoa_review.router, prefix="/teoa-reviews", tags=["Teoa Reviews"])
+api_router.include_router(teoa_comment.router, prefix="/teoa-comments", tags=["Teoa Comments"])

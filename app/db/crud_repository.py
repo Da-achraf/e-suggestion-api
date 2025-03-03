@@ -2,30 +2,12 @@ from typing import Dict, Generic, TypeVar, List, Optional, Any, Type
 from sqlmodel import SQLModel, Session, select, func, and_
 from datetime import datetime
 from sqlmodel import Session
-from sqlalchemy.orm import RelationshipProperty
 from app.db.dependencies import SessionDep
+from app.utils.database import is_relationship, apply_filters
+
 
 ModelType = TypeVar("ModelType", bound=SQLModel)
 ResponseType = TypeVar("ResponseType", bound=SQLModel)
-
-# ----------------------------------------------
-def is_relationship(attribute):
-    """
-    Check if an InstrumentedAttribute is a relationship.
-    """
-    return isinstance(attribute.property, RelationshipProperty)
-
-def get_related_model_class(model, relationship):
-    """
-    Get the related model class for a relationship.
-    """
-    if isinstance(relationship.property, RelationshipProperty):
-        related_model_class = relationship.property.entity.class_
-        return related_model_class
-    else:
-        raise ValueError(f"'{relationship}' is not a relationship.")
-# ----------------------------------------------
-
 
 
 class CRUDBaseRepository(Generic[ModelType, ResponseType]):
@@ -74,7 +56,7 @@ class CRUDBaseRepository(Generic[ModelType, ResponseType]):
         Count records in the table that match the given filters.
         """
         statement = select(func.count()).select_from(self.model)
-        statement = self._apply_filters(db, statement, filters)
+        statement = apply_filters(self.model, statement, filters)
         result = db.exec(statement).first()
         return result
     
@@ -90,6 +72,7 @@ class CRUDBaseRepository(Generic[ModelType, ResponseType]):
         )
         return db.exec(statement).all()
     
+    
     def find_paginated_with_filters(
         self, db: Session, offset: int, limit: int, filters: Dict[str, Dict[str, Any]]
     ) -> List[ModelType]:
@@ -97,13 +80,13 @@ class CRUDBaseRepository(Generic[ModelType, ResponseType]):
         Fetch paginated records from the table that match the given filters.
         """
         statement = select(self.model).order_by(self.model.id)
-        statement = self._apply_filters(db, statement, filters)
+        statement = apply_filters(self.model, statement, filters)
         statement = statement.offset(offset).limit(limit)
         
         return db.exec(statement).all()    
     
     
-    def _apply_filters(self, db, statement, filters: Dict[str, Dict[str, Any]]):
+    def _apply_filters(self, statement, filters: Dict[str, Dict[str, Any]]):
         """
         Apply filters to the SQL statement.
         Supports both direct field filters and relationship field filters.
@@ -174,88 +157,6 @@ class CRUDBaseRepository(Generic[ModelType, ResponseType]):
         if filter_conditions:
             statement = statement.where(and_(*filter_conditions))
         return statement
-    
-    
-    # def _apply_filters(self, statement, filters: Dict[str, Dict[str, Any]]):
-    #     """
-    #     Apply filters to the SQL statement, including filters on related models.
-    #     This is a generic implementation that handles all types of relationships.
-    #     """
-    #     filter_conditions = []
-    #     for field, filter_info in filters.items():
-    #         operator = filter_info["operator"]
-    #         value = filter_info["value"]
-            
-    #         if hasattr(self.model, field):
-    #             field_column = getattr(self.model, field)
-                
-    #             # Handle relationships
-    #             if isinstance(field_column, RelationshipProperty):
-    #                 if field_column.secondary is not None:
-    #                     # Handle many-to-many relationships
-    #                     association_table = field_column.secondary
-    #                     related_model = field_column.entity.class_
-    #                     related_field = filter_info.get("related_field", "id")
-                        
-    #                     # Determine the foreign key column in the association table
-    #                     fk_column = None
-    #                     for column in association_table.columns:
-    #                         if column.foreign_keys:
-    #                             for fk in column.foreign_keys:
-    #                                 if fk.column.table == related_model.__table__:
-    #                                     fk_column = column
-    #                                     break
-    #                         if fk_column:
-    #                             break
-                        
-    #                     if fk_column is None:
-    #                         raise ValueError(f"Could not determine foreign key column for relationship: {field}")
-                        
-    #                     # Join the association table
-    #                     statement = statement.join(association_table)
-                        
-    #                     # Apply the filter condition on the foreign key column
-    #                     if operator == "eq":
-    #                         filter_conditions.append(fk_column == value)
-    #                     elif operator == "in":
-    #                         filter_conditions.append(fk_column.in_(value.split(",")))
-    #                 else:
-    #                     # Handle one-to-many or many-to-one relationships
-    #                     related_model = field_column.entity.class_
-    #                     related_field = filter_info.get("related_field", "id")
-                        
-    #                     # Join the related table
-    #                     statement = statement.join(related_model)
-                        
-    #                     # Apply the filter condition on the joined table
-    #                     if operator == "eq":
-    #                         filter_conditions.append(getattr(related_model, related_field) == value)
-    #                     elif operator == "in":
-    #                         filter_conditions.append(getattr(related_model, related_field).in_(value.split(",")))
-    #             else:
-    #                 # Handle regular columns
-    #                 if hasattr(field_column, "type") and isinstance(field_column.type, datetime):
-    #                     value = datetime.fromisoformat(value)  # Convert string to datetime
-                    
-    #                 if operator == "eq":
-    #                     filter_conditions.append(field_column == value)
-    #                 elif operator == "gt":
-    #                     filter_conditions.append(field_column > value)
-    #                 elif operator == "lt":
-    #                     filter_conditions.append(field_column < value)
-    #                 elif operator == "gte":
-    #                     filter_conditions.append(field_column >= value)
-    #                 elif operator == "lte":
-    #                     filter_conditions.append(field_column <= value)
-    #                 elif operator == "contains":
-    #                     filter_conditions.append(field_column.contains(value))
-    #                 elif operator == "in":
-    #                     filter_conditions.append(field_column.in_(value.split(",")))
-    #                 # Add more operators as needed
-        
-    #     if filter_conditions:
-    #         statement = statement.where(and_(*filter_conditions))
-    #     return statement
 
 
     def find_by_ids(self, db: Session, ids: List[int]) -> List[ModelType]:
@@ -298,11 +199,16 @@ class CRUDBaseRepository(Generic[ModelType, ResponseType]):
         model = self.find_by_id(db=db, model_id=model_id)
         if not model:
             return None
+        
+        # Extract only the direct attributes of the model
+        direct_attributes = {
+            key: value
+            for key, value in data.items()
+            if key in self.model.__table__.columns and key != 'id'
+        }
 
-        for field, value in data.items():
-            # Check if the field exists in the model
-            if hasattr(model, field) and field != 'id':
-                setattr(model, field, value)
+        for field, value in direct_attributes.items():
+            setattr(model, field, value)
         db.add(model)
         db.commit()
         db.refresh(model)

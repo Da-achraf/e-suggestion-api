@@ -19,7 +19,6 @@ class CommentBase(SQLModel):
 class CommentMixin(SQLModel):
     commenter_id: Optional[int] = Field(default=None, foreign_key='users.id', ondelete='CASCADE')
     idea_id: Optional[int] = Field(default=None, foreign_key='ideas.id', ondelete='CASCADE')
-    # assignment_id: Optional[int] = Field(default=None, foreign_key='assignments.id')
 
 
 class CommentCreate(CommentBase, CommentMixin):

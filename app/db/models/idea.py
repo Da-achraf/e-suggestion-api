@@ -11,6 +11,7 @@ from .attachment import Attachment
 from .comment import Comment
 from .rating_matrix import RatingMatrix
 from .assignment import Assignment
+from .teoa_review import TeoaReview
 
 if TYPE_CHECKING:
     from .user import UserModel
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
     from .comment import CommentModel
     from .rating_matrix import RatingMatrixModel
     from .assignment import AssignmentModel
+    from .teoa_review import TeoaReviewModel
 
 class IdeaStatus(str, enum.Enum):
     CREATED = "created"
@@ -67,6 +69,8 @@ class IdeaModel(IdeaBase, IdeaMixin, table=True):
     rating_matrix: Optional["RatingMatrixModel"] = Relationship(back_populates='idea', cascade_delete=True)
     
     assignment: Optional["AssignmentModel"] = Relationship(back_populates='idea', cascade_delete=True)
+   
+    teoa_review: Optional["TeoaReviewModel"] = Relationship(back_populates='idea', cascade_delete=True)
     
     
 class IdeaCreate(IdeaBase, IdeaMixin):
@@ -80,8 +84,7 @@ class Idea(IdeaBase):
     comments: list[Comment]
     rating_matrix: Optional[RatingMatrix]=None
     assignment: Optional[Assignment]=None
+    teoa_review: Optional[TeoaReview]=None
     
     class Config:
         from_attributes = True
-        
-# IdeaModel.model_rebuild()

@@ -16,7 +16,7 @@ class AssignmentCommentBase(SQLModel):
     
 class AssignmentCommentMixin(SQLModel):
     commenter_id: Optional[int] = Field(default=None, foreign_key='users.id', ondelete='CASCADE')
-    assignment_id: Optional[int] = Field(default=None, foreign_key='assignments.id')
+    assignment_id: Optional[int] = Field(default=None, foreign_key='assignments.id', ondelete='CASCADE')
 
 
 class AssignmentCommentCreate(AssignmentCommentBase, AssignmentCommentMixin):

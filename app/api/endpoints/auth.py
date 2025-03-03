@@ -12,9 +12,8 @@ from app.core.config import SettingsDep
 from app.core.dpendencies import AuthenticatedUserDep
 from app.schemas import Response
 from app.db.models import User, UserWithToken, Role, RoleEnum
-from app.schemas.auth import Token
+from app.utils.validation import is_submitter
 from app.utils.exceptions.db import transaction_failed
-
 from app.utils.exceptions.auth import account_not_approved, incorrect_credentials
 
 
@@ -41,7 +40,7 @@ async def register(
         role: Optional[Role] = role_repository.find_by_id(db=db, model_id=user_to_save.role_id)
         
         # Activate the account
-        if role and Role.model_validate(role).name == RoleEnum.SUBMITTER.value:
+        if role and is_submitter(role):
             saved_user.account_status = True
         
         if parsed_user and role and role.name not in [role['name'] for role in parsed_user.roles]:

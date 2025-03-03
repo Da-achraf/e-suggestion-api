@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 
 # Load environment variables from the .env file
-load_dotenv()
+load_dotenv('.env')
 
 class JWTSettings(BaseSettings):
     SECRET: str
@@ -55,6 +55,8 @@ def get_settings() -> Settings:
         DB=db_settings,
         JWT=jwt_settings
     )
+
+    print('Mode: ', settings.MODE)
     
     return settings
 
